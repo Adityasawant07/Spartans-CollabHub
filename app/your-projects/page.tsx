@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Plus, CheckCircle, XCircle } from "lucide-react"
+import { Plus, CheckCircle, XCircle, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { BottomNav } from "@/components/bottom-nav"
 import type { Project } from "@/lib/types"
@@ -64,15 +64,38 @@ export default function YourProjectsPage() {
     }
   }
 
+  async function handleDeleteProject(projectId: string) {
+    if (!confirm("Are you sure you want to delete this task? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/delete`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to delete task")
+      }
+
+      alert("Task deleted successfully!")
+      fetchMyProjects()
+    } catch (error: any) {
+      console.error("Failed to delete task:", error)
+      alert(error.message || "Failed to delete task")
+    }
+  }
+
   return (
     <div className="flex h-screen flex-col bg-background">
       <header className="border-b">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <h1 className="text-2xl font-bold text-primary">Your Projects</h1>
+          <h1 className="text-2xl font-bold text-primary">Your Tasks</h1>
           <Button asChild>
             <Link href="/projects/create">
               <Plus className="mr-2 h-4 w-4" />
-              Create Project
+              Create Task
             </Link>
           </Button>
         </div>
@@ -84,11 +107,11 @@ export default function YourProjectsPage() {
             <div className="text-center">Loading...</div>
           ) : myProjects.length === 0 ? (
             <div className="text-center">
-              <p className="mb-4 text-muted-foreground">You haven't created any projects yet.</p>
+              <p className="mb-4 text-muted-foreground">You haven't created any tasks yet.</p>
               <Button asChild>
                 <Link href="/projects/create">
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Your First Project
+                  Create Your First Task
                 </Link>
               </Button>
             </div>
@@ -99,7 +122,17 @@ export default function YourProjectsPage() {
                   <CardHeader>
                     <div className="mb-2 flex items-start justify-between">
                       <CardTitle className="line-clamp-2">{project.title}</CardTitle>
-                      <Badge variant={project.status === "Open" ? "default" : "secondary"}>{project.status}</Badge>
+                      <div className="flex gap-1">
+                        <Badge variant={project.status === "Open" ? "default" : "secondary"}>{project.status}</Badge>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-auto p-1 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => handleDeleteProject(project.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <CardDescription className="line-clamp-3">{project.description}</CardDescription>
                   </CardHeader>
