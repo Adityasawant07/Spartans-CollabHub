@@ -62,7 +62,7 @@ export default function OrganizerLoginPage() {
           </div>
           <CardTitle className="text-center">Organizer Login</CardTitle>
           <CardDescription className="text-center">
-            Login with your verified institute code to manage competitions and events
+            Login with your verified institute code to manage events
           </CardDescription>
         </CardHeader>
         <CardContent>

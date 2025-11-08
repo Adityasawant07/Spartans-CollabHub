@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* CollabHub color palette - clean white background with gradient accent colors */
+  /* CollabHub color palette - clean white background with Neon Blue accent */
   --background: oklch(1 0 0); /* Pure white */
   --foreground: oklch(0.25 0.01 270); /* Dark charcoal #333333 */
 
@@ -14,20 +14,20 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.25 0.01 270);
 
-  /* Primary: Deep purple/blue from gradient start #6a11cb */
-  --primary: oklch(0.42 0.18 285);
+  /* Primary: Neon Blue #3B82F6 (brighter than previous light blue) */
+  --primary: oklch(0.63 0.22 250);
   --primary-foreground: oklch(1 0 0); /* White text on primary */
 
-  /* Secondary: Bright teal/cyan for CTAs #00c4cc */
-  --secondary: oklch(0.7 0.13 200);
+  /* Secondary: Neon Blue for CTAs */
+  --secondary: oklch(0.63 0.22 250);
   --secondary-foreground: oklch(1 0 0);
 
   /* Muted: Very light gray for subtle backgrounds */
   --muted: oklch(0.98 0.002 270);
   --muted-foreground: oklch(0.5 0.01 270);
 
-  /* Accent: Vibrant teal/cyan for interactive elements */
-  --accent: oklch(0.7 0.13 200);
+  /* Accent: Neon Blue for interactive elements */
+  --accent: oklch(0.63 0.22 250);
   --accent-foreground: oklch(1 0 0);
 
   --destructive: oklch(0.577 0.245 27.325);
@@ -37,26 +37,28 @@
   --border: oklch(0.93 0.005 270);
   --input: oklch(0.93 0.005 270);
 
-  /* Ring: Teal for focus states */
-  --ring: oklch(0.7 0.13 200);
+  /* Ring: Neon Blue for focus states */
+  --ring: oklch(0.63 0.22 250);
 
-  /* Chart colors using the gradient */
-  --chart-1: oklch(0.42 0.18 285); /* Deep purple */
-  --chart-2: oklch(0.6 0.15 240); /* Bright blue */
-  --chart-3: oklch(0.7 0.13 200); /* Teal */
-  --chart-4: oklch(0.65 0.15 155); /* Vibrant green */
-  --chart-5: oklch(0.55 0.16 260); /* Mid purple-blue */
+  /* Chart colors with Neon Blue base */
+  --chart-1: oklch(0.63 0.22 250);
+  --chart-2: oklch(0.65 0.15 220);
+  --chart-3: oklch(0.78 0.12 250);
+  --chart-4: oklch(0.68 0.13 230);
+  --chart-5: oklch(0.75 0.14 245);
 
   --radius: 0.75rem;
 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.25 0.01 270);
-  --sidebar-primary: oklch(0.7 0.13 200);
+  /* Sidebar primary: Neon Blue */
+  --sidebar-primary: oklch(0.63 0.22 250);
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.98 0.002 270);
   --sidebar-accent-foreground: oklch(0.25 0.01 270);
   --sidebar-border: oklch(0.93 0.005 270);
-  --sidebar-ring: oklch(0.7 0.13 200);
+  /* Sidebar ring: Neon Blue */
+  --sidebar-ring: oklch(0.63 0.22 250);
 }
 
 .dark {

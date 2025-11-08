@@ -137,7 +137,7 @@ export default function CompetitionsPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
             <Trophy className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold text-primary">Active Competitions</h1>
+            <h1 className="text-xl font-bold text-primary">Active Events</h1>
           </div>
         </div>
       </header>
@@ -145,13 +145,13 @@ export default function CompetitionsPage() {
       <main className="flex-1 overflow-y-auto pb-16">
         <div className="container mx-auto px-4 py-8">
           {loading ? (
-            <div className="text-center text-muted-foreground">Loading competitions...</div>
+            <div className="text-center text-muted-foreground">Loading events...</div>
           ) : competitions.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <Trophy className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">No active competitions at the moment.</p>
-                <p className="mt-2 text-sm text-muted-foreground">Check back later for new competitions!</p>
+                <p className="text-muted-foreground">No active events at the moment.</p>
+                <p className="mt-2 text-sm text-muted-foreground">Check back later for new events!</p>
               </CardContent>
             </Card>
           ) : (

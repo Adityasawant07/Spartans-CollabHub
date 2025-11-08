@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MessageCircle, ArrowLeft, Clock } from "lucide-react"
+import { MessageCircle, ArrowLeft, Clock, User } from "lucide-react"
 import Link from "next/link"
 import type { Conversation } from "@/lib/types"
 
@@ -114,7 +114,7 @@ export default function MessagesPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-6 w-6" />
-                Messages
+                Private Messages
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -137,7 +137,13 @@ export default function MessagesPage() {
                         </Avatar>
                         <div className="flex-1 overflow-hidden min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-semibold text-base truncate">{conv.other_user.name}</h3>
+                            <div>
+                              <h3 className="font-semibold text-base truncate">{conv.other_user.name}</h3>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                {conv.other_user.college || "College not specified"}
+                              </p>
+                            </div>
                             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Clock className="h-3 w-3" />
@@ -160,9 +166,6 @@ export default function MessagesPage() {
                           >
                             {conv.last_message.message}
                           </p>
-                          {conv.other_user.bio && (
-                            <p className="text-xs text-muted-foreground truncate mt-1">{conv.other_user.bio}</p>
-                          )}
                         </div>
                         <MessageCircle className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                       </div>

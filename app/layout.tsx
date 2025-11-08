@@ -9,8 +9,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CollabHub - Connect, Collaborate, Create",
-  description: "Connect with students, collaborate on projects, and create amazing things together",
+  title: "College Connect - Connect, Collaborate, Create",
+  description: "Connect with students across colleges, collaborate on projects, and create amazing things together",
   generator: "v0.app",
   icons: {
     icon: [

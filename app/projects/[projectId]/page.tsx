@@ -129,6 +129,27 @@ export default function ProjectDetailPage() {
   const hasApplied = project.applicants?.some((a: any) => a.user === profile?.id)
   const applicantsWithProfiles = project.applicants as ApplicantWithProfile[] | undefined
 
+  const metadata = (project?.attachments as any[])?.find((att: any) => att.type === "metadata") || {}
+  const teamSize = metadata.team_size || 0
+  const difficulty = metadata.difficulty || "medium"
+  const acceptedCount = (project?.applicants as any[])?.filter((a: any) => a.status === "Accepted")?.length || 0
+  const isTeamFull = teamSize > 0 && acceptedCount >= teamSize
+
+  function getDifficultyBadge(diff: string) {
+    switch (diff) {
+      case "easy":
+        return { text: "🟢 Easy", className: "bg-green-100 text-green-800" }
+      case "medium":
+        return { text: "🟡 Medium", className: "bg-yellow-100 text-yellow-800" }
+      case "hard":
+        return { text: "🔴 Hard", className: "bg-red-100 text-red-800" }
+      default:
+        return { text: diff, className: "bg-gray-100 text-gray-800" }
+    }
+  }
+
+  const difficultyBadge = getDifficultyBadge(difficulty)
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
@@ -165,8 +186,27 @@ export default function ProjectDetailPage() {
                     </div>
                   </div>
                 </div>
-                <Badge variant={project.status === "Open" ? "default" : "secondary"}>{project.status}</Badge>
+                <div className="flex flex-col gap-2">
+                  <Badge className={difficultyBadge.className}>{difficultyBadge.text}</Badge>
+                  <Badge variant={project.status === "Open" ? "default" : "secondary"}>{project.status}</Badge>
+                </div>
               </div>
+              {teamSize > 0 && (
+                <div className="mt-4 p-3 bg-muted rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Team Progress</span>
+                    <span className="text-sm text-muted-foreground">
+                      {acceptedCount} / {teamSize} members
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-[#3B82F6] h-2 rounded-full transition-all"
+                      style={{ width: `${(acceptedCount / teamSize) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
@@ -200,7 +240,7 @@ export default function ProjectDetailPage() {
                 </div>
               )}
 
-              {!isAuthor && project.status === "Open" && !hasApplied && (
+              {!isAuthor && project.status === "Open" && !hasApplied && !isTeamFull && (
                 <div className="border-t pt-6">
                   <h3 className="mb-4 font-semibold">Apply to this Project</h3>
                   <div className="space-y-4">
@@ -215,10 +255,17 @@ export default function ProjectDetailPage() {
                       />
                     </div>
                     {error && <p className="text-sm text-destructive">{error}</p>}
-                    <Button onClick={handleApply} disabled={applying}>
-                      {applying ? "Submitting..." : "Submit Application"}
+                    <Button onClick={handleApply} disabled={applying} className="bg-[#3B82F6] hover:bg-[#2563EB]">
+                      {applying ? "Submitting..." : "Apply"}
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {!isAuthor && isTeamFull && (
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm font-medium">This team is now full</p>
+                  <p className="text-sm text-muted-foreground mt-1">All positions have been filled</p>
                 </div>
               )}
 
