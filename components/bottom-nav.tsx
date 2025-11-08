@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { Briefcase, User, Home, MessageCircle, Trophy } from "lucide-react"
+import { Home, User, MessageCircle, Lightbulb, ClipboardList } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
@@ -37,23 +37,22 @@ export function BottomNav() {
       active: pathname === "/dashboard",
     },
     {
-      icon: Briefcase,
+      icon: Lightbulb,
+      label: "Team Recommendation",
+      href: "/team-recommendations",
+      active: pathname === "/team-recommendations",
+    },
+    {
+      icon: ClipboardList,
       label: "Tasks",
       href: "/your-projects",
       active: pathname === "/your-projects",
     },
     {
       icon: MessageCircle,
-      label: "Chat",
+      label: "Community Chat",
       href: "/community-chat",
       active: pathname === "/community-chat",
-      isCenter: true,
-    },
-    {
-      icon: Trophy,
-      label: "Leaderboard",
-      href: "/leaderboard",
-      active: pathname === "/leaderboard",
     },
     {
       label: "Profile",
@@ -74,16 +73,16 @@ export function BottomNav() {
                 onClick={() => router.push(item.href)}
                 className={cn(
                   "flex flex-1 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors",
-                  item.active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                  item.active ? "text-[#60A5FA]" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Avatar className="h-5 w-5">
+                <Avatar className="h-7 w-7 ring-2 ring-transparent" style={item.active ? { ringColor: "#60A5FA" } : {}}>
                   <AvatarImage src={profilePictureUrl || undefined} />
-                  <AvatarFallback className="text-[10px]">
-                    <User className="h-3 w-3" />
+                  <AvatarFallback className="bg-[#60A5FA] text-white">
+                    {userName.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-[10px]">{item.label}</span>
+                <span className="text-xs">{item.label}</span>
               </button>
             )
           }
@@ -95,12 +94,11 @@ export function BottomNav() {
               onClick={() => router.push(item.href)}
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors",
-                item.active ? "text-primary" : "text-muted-foreground hover:text-foreground",
-                item.isCenter && "scale-110",
+                item.active ? "text-[#60A5FA]" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <Icon className={cn("h-5 w-5", item.active && "fill-primary", item.isCenter && "h-6 w-6")} />
-              <span className="text-[10px]">{item.label}</span>
+              <Icon className="h-6 w-6" />
+              <span className="text-xs">{item.label}</span>
             </button>
           )
         })}

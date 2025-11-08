@@ -50,6 +50,10 @@ export interface Project {
   attachments?: Attachment[]
   resources?: Resource[]
   category?: string
+  team_size?: number
+  difficulty?: "easy" | "medium" | "hard"
+  accepted_count?: number
+  is_active?: boolean
   created_at: string
   updated_at: string
   author?: StudentProfile
@@ -183,4 +187,22 @@ export interface LeaderboardEntry {
   skill_points: number
   badges: Badge[]
   rank: number
+}
+
+export interface GroupChat {
+  id: string
+  task_id: string
+  name: string
+  members: string[]
+  created_by: string
+  created_at: string
+}
+
+export interface GroupMessage {
+  id: string
+  group_chat_id: string
+  sender_id: string
+  message: string
+  created_at: string
+  sender?: StudentProfile
 }
