@@ -9,39 +9,14 @@ export default function HomePage() {
       {/* Navigation */}
       <nav className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#6a11cb] via-[#2575fc] to-[#00c4cc]" />
-              <span className="font-semibold text-xl text-primary">CollabHub</span>
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 flex items-center justify-center">
+              <span className="font-bold text-white text-lg">CH</span>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="border-amber-600 text-amber-600 hover:bg-amber-50 hover:text-amber-700 bg-transparent"
-            >
-              <Link href="/organizer/login">Organizer Login</Link>
-            </Button>
-          </div>
-          <div className="hidden md:flex items-center gap-6">
-            <a
-              href="#features"
-              className="text-sm text-foreground hover:text-accent hover:underline underline-offset-4 decoration-2 decoration-accent transition-all"
-            >
-              Features
-            </a>
-            <a
-              href="#about"
-              className="text-sm text-foreground hover:text-accent hover:underline underline-offset-4 decoration-2 decoration-accent transition-all"
-            >
-              About
-            </a>
-            <a
-              href="#contact"
-              className="text-sm text-foreground hover:text-accent hover:underline underline-offset-4 decoration-2 decoration-accent transition-all"
-            >
-              Contact
-            </a>
+            <div>
+              <span className="font-bold text-xl text-primary">CollabHub</span>
+              <p className="text-xs text-muted-foreground hidden sm:block">Connect. Collaborate. Create.</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -50,10 +25,18 @@ export default function HomePage() {
               asChild
               className="border-primary text-primary hover:bg-primary/10 bg-transparent"
             >
-              <Link href="/auth/login">Log in</Link>
+              <Link href="/auth/login">Login</Link>
             </Button>
             <Button size="sm" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Link href="/auth/sign-up">Sign up</Link>
+              <Link href="/auth/sign-up">Signup</Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="border-amber-600 text-amber-600 hover:bg-amber-50 hover:text-amber-700 bg-transparent"
+            >
+              <Link href="/organizer/login">Organizer Login</Link>
             </Button>
           </div>
         </div>
@@ -156,7 +139,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-gradient-to-r from-[#6a11cb] via-[#2575fc] to-[#00c4cc]" />
+              <div className="w-6 h-6 rounded bg-gradient-to-r from-[#6a11cb] via-violet-600 to-[#00c4cc]" />
               <span className="font-semibold">CollabHub</span>
             </div>
             <p className="text-sm text-white/80">{"© 2025 CollabHub. All rights reserved."}</p>

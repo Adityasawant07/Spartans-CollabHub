@@ -35,7 +35,6 @@ export default function CommunityChatPage() {
     checkAuth()
     fetchMessages()
 
-    // Subscribe to new messages in real-time
     const channel = supabase
       .channel("community_messages")
       .on(
@@ -59,7 +58,11 @@ export default function CommunityChatPage() {
             .single()
 
           if (newMsg) {
-            setMessages((prev) => [...prev, newMsg as CommunityMessage])
+            setMessages((prev) => {
+              // Prevent duplicates
+              if (prev.some((m) => m.id === newMsg.id)) return prev
+              return [...prev, newMsg as CommunityMessage]
+            })
           }
         },
       )
@@ -83,7 +86,6 @@ export default function CommunityChatPage() {
       return
     }
 
-    // Get current user's profile ID
     const response = await fetch("/api/profile/me")
     if (response.ok) {
       const profile = await response.json()
@@ -109,18 +111,23 @@ export default function CommunityChatPage() {
     if (!newMessage.trim()) return
 
     setSending(true)
+    const messageText = newMessage
+    setNewMessage("") // Clear immediately for instant feedback
+
     try {
       const response = await fetch("/api/community-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: newMessage }),
+        body: JSON.stringify({ message: messageText }),
       })
 
-      if (response.ok) {
-        setNewMessage("")
+      if (!response.ok) {
+        // Restore message on error
+        setNewMessage(messageText)
       }
     } catch (error) {
       console.error("Failed to send message:", error)
+      setNewMessage(messageText)
     } finally {
       setSending(false)
     }
@@ -159,7 +166,10 @@ export default function CommunityChatPage() {
               messages.map((message) => {
                 const isCurrentUser = message.sender_id === currentUserId
                 return (
-                  <div key={message.id} className={`flex gap-3 ${isCurrentUser ? "flex-row-reverse" : ""}`}>
+                  <div
+                    key={message.id}
+                    className={`flex gap-3 ${isCurrentUser ? "flex-row-reverse" : ""} animate-in fade-in slide-in-from-bottom-2 duration-200`}
+                  >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={message.sender.profile_picture_url || undefined} />
                       <AvatarFallback>{message.sender.name.charAt(0).toUpperCase()}</AvatarFallback>

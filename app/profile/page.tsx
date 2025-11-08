@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Edit, Upload, LogOut, Plus, Trash2, Award, Briefcase } from "lucide-react"
 import type { StudentProfile, UserAchievement, UserProject } from "@/lib/types"
 import { BottomNav } from "@/components/bottom-nav"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<StudentProfile | null>(null)
@@ -32,9 +33,12 @@ export default function ProfilePage() {
   const [showAddProject, setShowAddProject] = useState(false)
   const [newAchievement, setNewAchievement] = useState({ title: "", description: "", date: "", image_url: "" })
   const [newProject, setNewProject] = useState({ title: "", description: "", date: "", banner_url: "", link: "" })
+  const [isSubmittingAchievement, setIsSubmittingAchievement] = useState(false)
+  const [isSubmittingProject, setIsSubmittingProject] = useState(false)
 
   const router = useRouter()
   const supabase = getSupabaseBrowserClient()
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchProfile()
@@ -134,8 +138,6 @@ export default function ProfilePage() {
         }
       }
 
-      console.log("[v0] Updating profile with data:", JSON.stringify(formData).substring(0, 200))
-
       const response = await fetch("/api/profile/me", {
         method: "PUT",
         headers: {
@@ -143,9 +145,6 @@ export default function ProfilePage() {
         },
         body: JSON.stringify(formData),
       })
-
-      console.log("[v0] Update response status:", response.status)
-      console.log("[v0] Update response content-type:", response.headers.get("content-type"))
 
       const contentType = response.headers.get("content-type")
       if (!contentType || !contentType.includes("application/json")) {
@@ -160,11 +159,13 @@ export default function ProfilePage() {
         throw new Error(data.error || `Failed to update profile: ${response.status}`)
       }
 
-      console.log("[v0] Successfully updated profile")
-
       setProfile(data)
       setEditing(false)
       setProfilePicture(null)
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      })
     } catch (error: any) {
       console.error("[v0] Failed to update profile:", error.message)
       setError(error.message || "Failed to update profile. Please try again.")
@@ -174,6 +175,9 @@ export default function ProfilePage() {
   }
 
   async function handleAddAchievement() {
+    if (isSubmittingAchievement) return
+    setIsSubmittingAchievement(true)
+
     try {
       const response = await fetch("/api/achievements", {
         method: "POST",
@@ -184,10 +188,16 @@ export default function ProfilePage() {
       if (response.ok) {
         setShowAddAchievement(false)
         setNewAchievement({ title: "", description: "", date: "", image_url: "" })
-        fetchAchievementsAndProjects()
+        await fetchAchievementsAndProjects()
+        toast({
+          title: "Achievement added",
+          description: "Your achievement has been added successfully.",
+        })
       }
     } catch (error) {
       console.error("Failed to add achievement:", error)
+    } finally {
+      setIsSubmittingAchievement(false)
     }
   }
 
@@ -203,6 +213,9 @@ export default function ProfilePage() {
   }
 
   async function handleAddProject() {
+    if (isSubmittingProject) return
+    setIsSubmittingProject(true)
+
     try {
       const response = await fetch("/api/user-projects", {
         method: "POST",
@@ -213,10 +226,16 @@ export default function ProfilePage() {
       if (response.ok) {
         setShowAddProject(false)
         setNewProject({ title: "", description: "", date: "", banner_url: "", link: "" })
-        fetchAchievementsAndProjects()
+        await fetchAchievementsAndProjects()
+        toast({
+          title: "Project added",
+          description: "Your project has been added successfully.",
+        })
       }
     } catch (error) {
       console.error("Failed to add project:", error)
+    } finally {
+      setIsSubmittingProject(false)
     }
   }
 
@@ -243,7 +262,12 @@ export default function ProfilePage() {
     <div className="flex h-screen flex-col bg-background">
       <header className="border-b">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <h1 className="text-xl font-bold text-primary">CollabHub</h1>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 flex items-center justify-center">
+              <span className="font-bold text-white text-sm">CH</span>
+            </div>
+            <h1 className="text-xl font-bold text-primary">CollabHub</h1>
+          </div>
           <Button variant="outline" size="sm" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             Logout
@@ -552,8 +576,8 @@ export default function ProfilePage() {
                       onChange={(e) => setNewAchievement({ ...newAchievement, date: e.target.value })}
                     />
                     <div className="flex gap-2">
-                      <Button onClick={handleAddAchievement} size="sm">
-                        Save
+                      <Button onClick={handleAddAchievement} size="sm" disabled={isSubmittingAchievement}>
+                        {isSubmittingAchievement ? "Saving..." : "Save"}
                       </Button>
                       <Button onClick={() => setShowAddAchievement(false)} size="sm" variant="outline">
                         Cancel
@@ -565,7 +589,7 @@ export default function ProfilePage() {
                 {achievements.length === 0 && !showAddAchievement ? (
                   <p className="text-center text-muted-foreground">No achievements yet. Add your first one!</p>
                 ) : (
-                  achievements.map((achievement) => (
+                  Array.from(new Map(achievements.map((a) => [a.id, a])).values()).map((achievement) => (
                     <div key={achievement.id} className="flex items-start justify-between border-b pb-4 last:border-0">
                       <div className="flex-1">
                         <h4 className="font-semibold">{achievement.title}</h4>
@@ -627,8 +651,8 @@ export default function ProfilePage() {
                       onChange={(e) => setNewProject({ ...newProject, link: e.target.value })}
                     />
                     <div className="flex gap-2">
-                      <Button onClick={handleAddProject} size="sm">
-                        Save
+                      <Button onClick={handleAddProject} size="sm" disabled={isSubmittingProject}>
+                        {isSubmittingProject ? "Saving..." : "Save"}
                       </Button>
                       <Button onClick={() => setShowAddProject(false)} size="sm" variant="outline">
                         Cancel
@@ -640,7 +664,7 @@ export default function ProfilePage() {
                 {userProjects.length === 0 && !showAddProject ? (
                   <p className="text-center text-muted-foreground">No projects yet. Add your first one!</p>
                 ) : (
-                  userProjects.map((project) => (
+                  Array.from(new Map(userProjects.map((p) => [p.id, p])).values()).map((project) => (
                     <div key={project.id} className="flex items-start justify-between border-b pb-4 last:border-0">
                       <div className="flex-1">
                         <h4 className="font-semibold">{project.title}</h4>

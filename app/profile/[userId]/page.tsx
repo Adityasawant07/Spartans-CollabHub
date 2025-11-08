@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ArrowLeft, Github, Linkedin, Globe, Mail, MessageCircle, Phone } from "lucide-react"
 import Link from "next/link"
-import type { StudentProfile } from "@/lib/types"
+import type { StudentProfile, UserAchievement, UserProject } from "@/lib/types"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 
 export default function PublicProfilePage() {
   const [profile, setProfile] = useState<StudentProfile | null>(null)
+  const [achievements, setAchievements] = useState<UserAchievement[]>([])
+  const [userProjects, setUserProjects] = useState<UserProject[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [isOwnProfile, setIsOwnProfile] = useState(false)
@@ -48,6 +50,21 @@ export default function PublicProfilePage() {
 
       const data = await response.json()
       setProfile(data)
+
+      const [achievementsRes, projectsRes] = await Promise.all([
+        fetch(`/api/achievements?userId=${params.userId}`),
+        fetch(`/api/user-projects?userId=${params.userId}`),
+      ])
+
+      if (achievementsRes.ok) {
+        const achievementsData = await achievementsRes.json()
+        setAchievements(achievementsData.achievements || [])
+      }
+
+      if (projectsRes.ok) {
+        const projectsData = await projectsRes.json()
+        setUserProjects(projectsData.projects || [])
+      }
     } catch (err: any) {
       console.error("Failed to fetch profile:", err)
       setError(err.message)
@@ -57,7 +74,14 @@ export default function PublicProfilePage() {
   }
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center">Loading...</div>
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+          <p className="mt-4 text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
+    )
   }
 
   if (error || !profile) {
@@ -215,20 +239,22 @@ export default function PublicProfilePage() {
           )}
 
           {/* Past Projects */}
-          {profile.past_projects && profile.past_projects.length > 0 && (
+          {userProjects.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Past Projects</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {profile.past_projects.map((project, idx) => (
-                  <div key={idx} className="border-b pb-4 last:border-0 last:pb-0">
+                {userProjects.map((project) => (
+                  <div key={project.id} className="border-b pb-4 last:border-0 last:pb-0">
                     <h4 className="font-semibold">{project.title}</h4>
-                    {project.role && <p className="text-sm text-muted-foreground">{project.role}</p>}
+                    {project.date && (
+                      <p className="text-sm text-muted-foreground">{new Date(project.date).toLocaleDateString()}</p>
+                    )}
                     {project.description && <p className="mt-1 text-sm">{project.description}</p>}
-                    {project.url && (
+                    {project.link && (
                       <Button asChild className="mt-2" size="sm" variant="link">
-                        <a href={project.url} target="_blank" rel="noopener noreferrer">
+                        <a href={project.link} target="_blank" rel="noopener noreferrer">
                           View Project
                         </a>
                       </Button>
@@ -240,16 +266,18 @@ export default function PublicProfilePage() {
           )}
 
           {/* Achievements */}
-          {profile.achievements && profile.achievements.length > 0 && (
+          {achievements.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Achievements</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {profile.achievements.map((achievement, idx) => (
-                  <div key={idx} className="border-b pb-4 last:border-0 last:pb-0">
+                {achievements.map((achievement) => (
+                  <div key={achievement.id} className="border-b pb-4 last:border-0 last:pb-0">
                     <h4 className="font-semibold">{achievement.title}</h4>
-                    {achievement.year && <p className="text-sm text-muted-foreground">{achievement.year}</p>}
+                    {achievement.date && (
+                      <p className="text-sm text-muted-foreground">{new Date(achievement.date).toLocaleDateString()}</p>
+                    )}
                     {achievement.description && <p className="mt-1 text-sm">{achievement.description}</p>}
                   </div>
                 ))}

@@ -26,21 +26,50 @@ export default function ConversationPage() {
     checkAuth()
     fetchOtherUserProfile()
     fetchMessages()
+  }, [params.userId])
+
+  useEffect(() => {
+    if (!currentUserId || !params.userId) return
+
+    const roomId = `room-${[currentUserId, params.userId].sort().join("-")}`
 
     const channel = supabase
-      .channel("messages")
+      .channel(roomId)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `sender_id=eq.${params.userId},recipient_id=eq.${currentUserId}`,
         },
-        (payload) => {
+        async (payload) => {
           console.log("[v0] New message received:", payload)
           const newMsg = payload.new as Message
-          setMessages((prev) => [...prev, newMsg])
+
+          // Only add if it's part of this conversation
+          if (
+            (newMsg.sender_id === currentUserId && newMsg.recipient_id === params.userId) ||
+            (newMsg.sender_id === params.userId && newMsg.recipient_id === currentUserId)
+          ) {
+            // Fetch complete message with profile data
+            const { data } = await supabase
+              .from("messages")
+              .select(`
+                *,
+                sender:student_profiles!messages_sender_id_fkey(*),
+                recipient:student_profiles!messages_recipient_id_fkey(*)
+              `)
+              .eq("id", newMsg.id)
+              .single()
+
+            if (data) {
+              setMessages((prev) => {
+                // Prevent duplicates
+                if (prev.some((m) => m.id === data.id)) return prev
+                return [...prev, data as Message]
+              })
+            }
+          }
         },
       )
       .subscribe()
@@ -48,7 +77,7 @@ export default function ConversationPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [params.userId, currentUserId])
+  }, [currentUserId, params.userId])
 
   useEffect(() => {
     scrollToBottom()
@@ -63,7 +92,6 @@ export default function ConversationPage() {
       return
     }
 
-    // Get current user's profile ID
     const response = await fetch("/api/profile/me")
     const profile = await response.json()
     setCurrentUserId(profile.id)
@@ -85,6 +113,7 @@ export default function ConversationPage() {
       const data = await response.json()
       setMessages(data)
 
+      // Mark messages as read
       await fetch("/api/messages/mark-read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -101,23 +130,30 @@ export default function ConversationPage() {
     if (!newMessage.trim()) return
 
     setSending(true)
+    const messageText = newMessage
+    setNewMessage("") // Clear immediately for better UX
+
     try {
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           recipient_id: params.userId,
-          message: newMessage,
+          message: messageText,
         }),
       })
 
       if (response.ok) {
         const sentMessage = await response.json()
-        setMessages([...messages, sentMessage])
-        setNewMessage("")
+        // The real-time subscription will add it, but we add it here too for instant feedback
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === sentMessage.id)) return prev
+          return [...prev, sentMessage]
+        })
       }
     } catch (error) {
       console.error("Failed to send message:", error)
+      setNewMessage(messageText) // Restore message on error
     } finally {
       setSending(false)
     }
@@ -170,7 +206,10 @@ export default function ConversationPage() {
             messages.map((message) => {
               const isCurrentUser = message.sender_id === currentUserId
               return (
-                <div key={message.id} className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}>
+                <div
+                  key={message.id}
+                  className={`flex ${isCurrentUser ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
+                >
                   <div
                     className={`max-w-[70%] rounded-lg px-4 py-2 ${
                       isCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted"

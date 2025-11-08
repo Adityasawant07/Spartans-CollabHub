@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Calendar, UserIcon, Mail, MessageCircle } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ArrowLeft, Calendar, UserIcon, MessageCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 import type { Project, StudentProfile } from "@/lib/types"
 
@@ -34,6 +35,27 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     fetchProject()
     fetchUserProfile()
+
+    const channel = supabase
+      .channel(`project-${params.projectId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "projects",
+          filter: `id=eq.${params.projectId}`,
+        },
+        () => {
+          console.log("[v0] Project updated, refreshing applicants")
+          fetchProject()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [params.projectId])
 
   async function fetchProject() {
@@ -93,7 +115,14 @@ export default function ProjectDetailPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   if (!project) return <div className="p-8 text-center">Project not found</div>
 
   const isAuthor = profile?.id === project.author_id
@@ -124,7 +153,7 @@ export default function ProjectDetailPage() {
                     <div className="flex items-center gap-2">
                       <UserIcon className="h-4 w-4" />
                       <span>{project.author?.name}</span>
-                      {project.author_id && (
+                      {!isAuthor && project.author_id && (
                         <Button asChild size="sm" variant="link" className="h-auto p-0 text-sm">
                           <Link href={`/profile/${project.author_id}`}>View Profile</Link>
                         </Button>
@@ -203,7 +232,7 @@ export default function ProjectDetailPage() {
                 <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4">
                   <p className="font-medium text-primary">You created this project</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    As the project owner, you can view applicants below and manage your team.
+                    As the project owner, you can view applicants below and contact them directly.
                   </p>
                 </div>
               )}
@@ -217,28 +246,32 @@ export default function ProjectDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {applicantsWithProfiles.map((applicant, idx) => (
-                  <div key={idx} className="flex items-start gap-4 rounded-lg border p-4">
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
-                      {applicant.profile?.name?.charAt(0).toUpperCase() || "?"}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-semibold">{applicant.profile?.name || "Unknown User"}</h4>
-                          {applicant.profile?.college && (
-                            <p className="text-sm text-muted-foreground">{applicant.profile.college}</p>
-                          )}
-                        </div>
-                        <Badge variant={applicant.status === "Pending" ? "outline" : "default"}>
-                          {applicant.status}
-                        </Badge>
+                  <div
+                    key={idx}
+                    className="flex items-start gap-4 rounded-lg border p-4 transition-shadow hover:shadow-md"
+                  >
+                    <Avatar className="h-14 w-14 flex-shrink-0">
+                      <AvatarImage src={applicant.profile?.profile_picture_url || undefined} />
+                      <AvatarFallback className="text-lg font-bold">
+                        {applicant.profile?.name?.charAt(0).toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 space-y-3">
+                      <div>
+                        <h4 className="text-lg font-semibold">{applicant.profile?.name || "Unknown User"}</h4>
+                        {applicant.profile?.college && (
+                          <p className="text-sm text-muted-foreground">{applicant.profile.college}</p>
+                        )}
+                        {applicant.profile?.bio && (
+                          <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{applicant.profile.bio}</p>
+                        )}
                       </div>
 
                       {applicant.profile && (
                         <>
                           {applicant.profile.skills && applicant.profile.skills.length > 0 && (
                             <div>
-                              <p className="mb-1 text-xs font-medium">Skills</p>
+                              <p className="mb-1 text-xs font-medium text-muted-foreground">Skills</p>
                               <div className="flex flex-wrap gap-1">
                                 {applicant.profile.skills.slice(0, 5).map((skill, skillIdx) => (
                                   <Badge key={skillIdx} variant="secondary" className="text-xs">
@@ -253,24 +286,12 @@ export default function ProjectDetailPage() {
                               </div>
                             </div>
                           )}
-
-                          {applicant.profile.interests && applicant.profile.interests.length > 0 && (
-                            <div>
-                              <p className="mb-1 text-xs font-medium">Interests</p>
-                              <div className="flex flex-wrap gap-1">
-                                {applicant.profile.interests.slice(0, 3).map((interest, interestIdx) => (
-                                  <Badge key={interestIdx} variant="outline" className="text-xs">
-                                    {interest}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                         </>
                       )}
 
                       {applicant.message && (
                         <div className="rounded-md bg-muted p-3">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Application Message:</p>
                           <p className="text-sm">{applicant.message}</p>
                         </div>
                       )}
@@ -283,22 +304,17 @@ export default function ProjectDetailPage() {
 
                       <div className="flex gap-2">
                         <Button asChild size="sm" variant="outline">
-                          <Link href={`/profile/${applicant.user}`}>View Full Profile</Link>
+                          <Link href={`/profile/${applicant.user}`}>
+                            <UserIcon className="mr-1 h-3 w-3" />
+                            View Profile
+                          </Link>
                         </Button>
-                        <Button asChild size="sm" variant="outline">
+                        <Button asChild size="sm" variant="default" className="bg-primary hover:bg-primary/90">
                           <Link href={`/messages/${applicant.user}`}>
-                            <MessageCircle className="mr-1 h-3 w-3" />
+                            <MessageCircle className="mr-1 h-4 w-4" />
                             Message
                           </Link>
                         </Button>
-                        {applicant.profile?.email && (
-                          <Button asChild size="sm" variant="outline">
-                            <a href={`mailto:${applicant.profile.email}`}>
-                              <Mail className="mr-1 h-3 w-3" />
-                              Email
-                            </a>
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </div>

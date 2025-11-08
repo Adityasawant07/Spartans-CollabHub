@@ -10,14 +10,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import Link from "next/link"
+
+const PROJECT_CATEGORIES = ["Web Development", "Mobile App", "AI/ML", "Design", "Data Science", "Other"]
 
 export default function CreateProjectPage() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [tags, setTags] = useState("")
   const [requiredSkills, setRequiredSkills] = useState("")
+  const [category, setCategory] = useState("")
+  const [resources, setResources] = useState<{ name: string; url: string }[]>([])
+  const [newResource, setNewResource] = useState({ name: "", url: "" })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -34,6 +40,17 @@ export default function CreateProjectPage() {
     }
     checkAuth()
   }, [router, supabase])
+
+  function addResource() {
+    if (newResource.name && newResource.url) {
+      setResources([...resources, newResource])
+      setNewResource({ name: "", url: "" })
+    }
+  }
+
+  function removeResource(index: number) {
+    setResources(resources.filter((_, i) => i !== index))
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -58,6 +75,8 @@ export default function CreateProjectPage() {
           description,
           tags: tagsArray,
           required_skills: skillsArray,
+          category: category || null,
+          resources: resources.length > 0 ? resources : null,
         }),
       })
 
@@ -117,6 +136,21 @@ export default function CreateProjectPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="category">Category (Optional)</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROJECT_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="tags">Tags (comma-separated)</Label>
                 <Input
                   id="tags"
@@ -133,6 +167,43 @@ export default function CreateProjectPage() {
                   onChange={(e) => setRequiredSkills(e.target.value)}
                   placeholder="React, Node.js, Python"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Project Resources (Optional)</Label>
+                <div className="space-y-2">
+                  {resources.map((resource, index) => (
+                    <div key={index} className="flex items-center gap-2 rounded-md border p-2">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{resource.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{resource.url}</p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeResource(index)}
+                        className="flex-shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Resource name"
+                      value={newResource.name}
+                      onChange={(e) => setNewResource({ ...newResource, name: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Resource URL"
+                      value={newResource.url}
+                      onChange={(e) => setNewResource({ ...newResource, url: e.target.value })}
+                    />
+                    <Button type="button" size="icon" onClick={addResource} variant="outline">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>

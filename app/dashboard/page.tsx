@@ -7,18 +7,31 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Maximize2, Minimize2, Calendar, Users, Sparkles, Inbox } from "lucide-react"
+import { Maximize2, Minimize2, Calendar, Users, Inbox, User, MessageCircle, Sparkles, Code, Rocket } from "lucide-react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import type { Project, Recommendation, Event } from "@/lib/types"
+import type { Project, Event } from "@/lib/types"
 import { BottomNav } from "@/components/bottom-nav"
 
 type PanelView = "split" | "requests" | "events"
 
+const statusColors = {
+  Open: "bg-green-100 text-green-800 border-green-300",
+  "In Progress": "bg-blue-100 text-blue-800 border-blue-300",
+  Closed: "bg-gray-100 text-gray-800 border-gray-300",
+}
+
+const categoryIcons: Record<string, any> = {
+  "Web Development": Code,
+  "Mobile App": Sparkles,
+  "AI/ML": Rocket,
+  Design: Sparkles,
+  Other: Code,
+}
+
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [events, setEvents] = useState<Event[]>([])
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([])
   const [loading, setLoading] = useState(true)
   const [unreadCount, setUnreadCount] = useState(0)
   const [panelView, setPanelView] = useState<PanelView>("split")
@@ -30,6 +43,25 @@ export default function DashboardPage() {
     checkAuth()
     fetchData()
     fetchUnreadCount()
+
+    const channel = supabase
+      .channel("unread-messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        () => {
+          fetchUnreadCount()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   async function checkAuth() {
@@ -50,19 +82,13 @@ export default function DashboardPage() {
 
   async function fetchData() {
     try {
-      const [projectsRes, eventsRes, recommendationsRes] = await Promise.all([
-        fetch("/api/projects"),
-        fetch("/api/events"),
-        fetch("/api/recommendations"),
-      ])
+      const [projectsRes, eventsRes] = await Promise.all([fetch("/api/projects"), fetch("/api/events")])
 
       const projectsData = await projectsRes.json()
       const eventsData = await eventsRes.json()
-      const recommendationsData = await recommendationsRes.json()
 
       setProjects(projectsData.projects || [])
       setEvents(eventsData.events || [])
-      setRecommendations(recommendationsData.recommendations || [])
     } catch (error) {
       console.error("Failed to fetch data:", error)
     } finally {
@@ -75,9 +101,8 @@ export default function DashboardPage() {
       const response = await fetch("/api/messages")
       if (response.ok) {
         const data = await response.json()
-        const conversations = data.conversations
-        if (Array.isArray(conversations)) {
-          const total = conversations.reduce((sum: number, conv: any) => sum + (conv.unread_count || 0), 0)
+        if (Array.isArray(data)) {
+          const total = data.reduce((sum: number, conv: any) => sum + (conv.unread_count || 0), 0)
           setUnreadCount(total)
         }
       }
@@ -96,82 +121,120 @@ export default function DashboardPage() {
     })
   }
 
+  const renderTaskButtons = (project: Project) => {
+    const isOwner = currentUserId === project.author_id
+
+    if (isOwner) {
+      return (
+        <Button asChild size="sm" className="flex-1">
+          <Link href={`/projects/${project.id}`}>
+            <Users className="mr-2 h-4 w-4" />
+            View Applicants
+          </Link>
+        </Button>
+      )
+    }
+
+    return (
+      <>
+        <Button asChild size="sm" variant="outline" className="flex-1 bg-transparent">
+          <Link href={`/profile/${project.author_id}`}>
+            <User className="mr-2 h-4 w-4" />
+            View Profile
+          </Link>
+        </Button>
+        <Button asChild size="sm" className="flex-1">
+          <Link href={`/messages/${project.author_id}`}>
+            <MessageCircle className="mr-2 h-4 w-4" />
+            Message
+          </Link>
+        </Button>
+      </>
+    )
+  }
+
+  const renderProjectCard = (project: Project) => {
+    const CategoryIcon = project.category ? categoryIcons[project.category] || Code : Code
+
+    return (
+      <Card
+        key={project.id}
+        className="group transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-primary"
+      >
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <CategoryIcon className="h-4 w-4 text-primary" />
+                {project.category && (
+                  <Badge variant="outline" className="text-xs">
+                    {project.category}
+                  </Badge>
+                )}
+              </div>
+              <CardTitle className="line-clamp-1 group-hover:text-primary transition-colors">{project.title}</CardTitle>
+            </div>
+            <Badge className={statusColors[project.status] || statusColors.Open}>{project.status}</Badge>
+          </div>
+          <CardDescription className="line-clamp-2">{project.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {project.author && (
+            <div className="mb-3 flex items-center gap-2">
+              <Avatar className="h-8 w-8 ring-2 ring-primary/10">
+                <AvatarImage src={project.author.profile_picture_url || undefined} />
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-white">
+                  {project.author.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground font-medium">{project.author.name}</span>
+            </div>
+          )}
+          {project.required_skills && project.required_skills.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-1">
+              {project.required_skills.slice(0, 3).map((skill, idx) => (
+                <Badge key={idx} variant="secondary" className="text-xs">
+                  {skill}
+                </Badge>
+              ))}
+              {project.required_skills.length > 3 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{project.required_skills.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+          <div className="flex gap-2">{renderTaskButtons(project)}</div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <div className="flex h-screen flex-col bg-background">
       <header className="flex items-center justify-between border-b bg-card px-4 py-3">
-        <h1 className="text-xl font-bold text-primary">CollabHub</h1>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 flex items-center justify-center">
+            <span className="font-bold text-white text-sm">CH</span>
+          </div>
+          <h1 className="text-xl font-bold text-primary">CollabHub</h1>
+        </div>
         <Button asChild variant="ghost" size="sm" className="relative">
           <Link href="/messages">
             <Inbox className="h-5 w-5" />
             {unreadCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                {unreadCount}
-              </span>
+              <>
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
+                  {unreadCount}
+                </span>
+                <span className="absolute -right-1 -top-1 h-5 w-5 rounded-full bg-blue-500 animate-ping opacity-75" />
+              </>
             )}
           </Link>
         </Button>
       </header>
 
       <main className="flex-1 overflow-hidden">
-        {recommendations.length > 0 && (
-          <div className="border-b bg-gradient-to-r from-purple-50 to-blue-50 p-4 dark:from-purple-950/20 dark:to-blue-950/20">
-            <div className="mx-auto max-w-7xl">
-              <div className="mb-3 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
-                  AI Suggested Teams for You
-                </h2>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {recommendations.map((rec) => (
-                  <Card
-                    key={rec.project.id}
-                    className="border-purple-200 transition-shadow hover:shadow-md dark:border-purple-800"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="mb-2 flex items-start justify-between">
-                        <CardTitle className="line-clamp-1 text-base">{rec.project.title}</CardTitle>
-                        <Badge
-                          variant="secondary"
-                          className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                        >
-                          {rec.matchScore}% Match
-                        </Badge>
-                      </div>
-                      <CardDescription className="line-clamp-2 text-xs">{rec.reason}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {rec.matchedSkills.length > 0 && (
-                        <div className="mb-3 flex flex-wrap gap-1">
-                          {rec.matchedSkills.slice(0, 3).map((skill) => (
-                            <Badge key={skill} variant="outline" className="text-xs">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                      {rec.project.author && (
-                        <div className="mb-3 flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={rec.project.author.profile_picture_url || undefined} />
-                            <AvatarFallback className="text-xs">
-                              {rec.project.author.name.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs text-muted-foreground">{rec.project.author.name}</span>
-                        </div>
-                      )}
-                      <Button asChild size="sm" className="w-full bg-purple-600 hover:bg-purple-700">
-                        <Link href={`/projects/${rec.project.id}`}>View & Apply</Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
         <AnimatePresence mode="wait">
           {panelView === "split" ? (
             <motion.div
@@ -182,8 +245,8 @@ export default function DashboardPage() {
               className="flex h-full gap-4 p-4"
             >
               {/* Requests Panel */}
-              <motion.div layout className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card">
-                <div className="flex items-center justify-between border-b p-4">
+              <motion.div layout className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card shadow-sm">
+                <div className="flex items-center justify-between border-b p-4 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-primary" />
                     <h2 className="text-lg font-semibold">Team Formation Requests</h2>
@@ -196,48 +259,16 @@ export default function DashboardPage() {
                   {loading ? (
                     <div className="text-center text-muted-foreground">Loading...</div>
                   ) : projects.length === 0 ? (
-                    <div className="text-center text-muted-foreground">No requests yet</div>
+                    <div className="text-center text-muted-foreground py-8">No requests yet</div>
                   ) : (
-                    projects.slice(0, 10).map((project) => (
-                      <Card key={project.id} className="transition-shadow hover:shadow-md">
-                        <CardHeader>
-                          <CardTitle className="line-clamp-1">{project.title}</CardTitle>
-                          <CardDescription className="line-clamp-2">{project.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          {project.author && (
-                            <div className="mb-3 flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={project.author.profile_picture_url || undefined} />
-                                <AvatarFallback>{project.author.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                              </Avatar>
-                              <span className="text-sm text-muted-foreground">{project.author.name}</span>
-                            </div>
-                          )}
-                          <div className="flex gap-2">
-                            <Button asChild size="sm" variant="outline" className="flex-1 bg-transparent">
-                              <Link href={`/profile/${project.author?.id}`}>View Profile</Link>
-                            </Button>
-                            {project.author_id === currentUserId ? (
-                              <span className="flex flex-1 items-center justify-center text-xs text-muted-foreground">
-                                You created this request
-                              </span>
-                            ) : (
-                              <Button asChild size="sm" className="flex-1">
-                                <Link href={`/projects/${project.id}`}>Apply</Link>
-                              </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
+                    projects.slice(0, 10).map((project) => renderProjectCard(project))
                   )}
                 </div>
               </motion.div>
 
               {/* Events Panel */}
-              <motion.div layout className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card">
-                <div className="flex items-center justify-between border-b p-4">
+              <motion.div layout className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card shadow-sm">
+                <div className="flex items-center justify-between border-b p-4 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-primary" />
                     <h2 className="text-lg font-semibold">Active Events</h2>
@@ -250,16 +281,16 @@ export default function DashboardPage() {
                   {loading ? (
                     <div className="text-center text-muted-foreground">Loading...</div>
                   ) : events.length === 0 ? (
-                    <div className="text-center text-muted-foreground">No events scheduled</div>
+                    <div className="text-center text-muted-foreground py-8">No events scheduled</div>
                   ) : (
                     events.slice(0, 10).map((event) => (
-                      <Card key={event.id} className="overflow-hidden transition-shadow hover:shadow-md">
+                      <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-lg">
                         {event.banner_url && (
                           <div className="aspect-video w-full overflow-hidden">
                             <img
                               src={event.banner_url || "/placeholder.svg"}
                               alt={event.name}
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
                             />
                           </div>
                         )}
@@ -297,8 +328,8 @@ export default function DashboardPage() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="h-full p-4"
             >
-              <div className="flex h-full flex-col overflow-hidden rounded-lg border bg-card">
-                <div className="flex items-center justify-between border-b p-4">
+              <div className="flex h-full flex-col overflow-hidden rounded-lg border bg-card shadow-sm">
+                <div className="flex items-center justify-between border-b p-4 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-primary" />
                     <h2 className="text-lg font-semibold">Team Formation Requests</h2>
@@ -310,39 +341,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1 overflow-y-auto p-4">
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {projects.map((project) => (
-                      <Card key={project.id} className="transition-shadow hover:shadow-md">
-                        <CardHeader>
-                          <CardTitle className="line-clamp-1">{project.title}</CardTitle>
-                          <CardDescription className="line-clamp-3">{project.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          {project.author && (
-                            <div className="mb-3 flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={project.author.profile_picture_url || undefined} />
-                                <AvatarFallback>{project.author.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                              </Avatar>
-                              <span className="text-sm text-muted-foreground">{project.author.name}</span>
-                            </div>
-                          )}
-                          <div className="flex gap-2">
-                            <Button asChild size="sm" variant="outline" className="flex-1 bg-transparent">
-                              <Link href={`/profile/${project.author?.id}`}>View Profile</Link>
-                            </Button>
-                            {project.author_id === currentUserId ? (
-                              <span className="flex flex-1 items-center justify-center text-xs text-muted-foreground">
-                                You created this request
-                              </span>
-                            ) : (
-                              <Button asChild size="sm" className="flex-1">
-                                <Link href={`/projects/${project.id}`}>Apply</Link>
-                              </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    {projects.map((project) => renderProjectCard(project))}
                   </div>
                 </div>
               </div>
@@ -355,8 +354,8 @@ export default function DashboardPage() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="h-full p-4"
             >
-              <div className="flex h-full flex-col overflow-hidden rounded-lg border bg-card">
-                <div className="flex items-center justify-between border-b p-4">
+              <div className="flex h-full flex-col overflow-hidden rounded-lg border bg-card shadow-sm">
+                <div className="flex items-center justify-between border-b p-4 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-primary" />
                     <h2 className="text-lg font-semibold">Active Events</h2>
@@ -369,13 +368,13 @@ export default function DashboardPage() {
                 <div className="flex-1 overflow-y-auto p-4">
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {events.map((event) => (
-                      <Card key={event.id} className="transition-shadow hover:shadow-md">
+                      <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-lg">
                         {event.banner_url && (
                           <div className="aspect-video w-full overflow-hidden">
                             <img
                               src={event.banner_url || "/placeholder.svg"}
                               alt={event.name}
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
                             />
                           </div>
                         )}

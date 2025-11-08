@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MessageCircle, ArrowLeft } from "lucide-react"
+import { MessageCircle, ArrowLeft, Clock } from "lucide-react"
 import Link from "next/link"
 import type { Conversation } from "@/lib/types"
 
@@ -57,7 +57,6 @@ export default function MessagesPage() {
       return
     }
 
-    // Get current user's profile ID
     const response = await fetch("/api/profile/me")
     const profile = await response.json()
     setCurrentUserId(profile.id)
@@ -75,6 +74,21 @@ export default function MessagesPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const formatMessageTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return "Just now"
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
   }
 
   if (loading) {
@@ -114,27 +128,43 @@ export default function MessagesPage() {
                 <div className="space-y-2">
                   {conversations.map((conv) => (
                     <Link key={conv.other_user.id} href={`/messages/${conv.other_user.id}`}>
-                      <div className="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted">
-                        <Avatar className="h-12 w-12 flex-shrink-0">
+                      <div className="flex items-start gap-4 rounded-lg border p-4 transition-all duration-200 hover:bg-muted hover:shadow-md relative group">
+                        <Avatar className="h-14 w-14 flex-shrink-0 ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
                           <AvatarImage src={conv.other_user.profile_picture_url || undefined} />
-                          <AvatarFallback className="text-lg">
+                          <AvatarFallback className="text-lg bg-gradient-to-br from-primary to-primary/60 text-white">
                             {conv.other_user.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 overflow-hidden">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">{conv.other_user.name}</h3>
-                            {conv.unread_count > 0 && (
-                              <Badge variant="default" className="ml-2">
-                                {conv.unread_count}
-                              </Badge>
-                            )}
+                        <div className="flex-1 overflow-hidden min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="font-semibold text-base truncate">{conv.other_user.name}</h3>
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                <span>{formatMessageTime(conv.last_message.created_at)}</span>
+                              </div>
+                              {conv.unread_count > 0 && (
+                                <div className="relative">
+                                  <Badge className="bg-blue-500 text-white hover:bg-blue-600 text-xs px-2">
+                                    {conv.unread_count}
+                                  </Badge>
+                                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <p className="truncate text-sm text-muted-foreground">{conv.last_message.message}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(conv.last_message.created_at).toLocaleDateString()}
+                          <p
+                            className={`text-sm truncate ${
+                              conv.unread_count > 0 ? "font-semibold text-foreground" : "text-muted-foreground"
+                            }`}
+                          >
+                            {conv.last_message.message}
                           </p>
+                          {conv.other_user.bio && (
+                            <p className="text-xs text-muted-foreground truncate mt-1">{conv.other_user.bio}</p>
+                          )}
                         </div>
+                        <MessageCircle className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                       </div>
                     </Link>
                   ))}
