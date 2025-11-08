@@ -17,6 +17,7 @@ export interface StudentProfile {
   past_projects?: PastProject[]
   achievements?: Achievement[]
   avatar_url?: string
+  skill_points?: number
   privacy_settings?: Record<string, unknown>
   created_at: string
   updated_at: string
@@ -47,6 +48,8 @@ export interface Project {
   team?: TeamMember[]
   applicants?: Applicant[]
   attachments?: Attachment[]
+  resources?: Resource[]
+  category?: string
   created_at: string
   updated_at: string
   author?: StudentProfile
@@ -61,7 +64,7 @@ export interface TeamMember {
 export interface Applicant {
   user: string
   message: string
-  status: "Pending" | "Accepted" | "Rejected"
+  status: "Pending" | "Accepted" | "Rejected" | "Approved"
 }
 
 export interface ApplicantWithProfile extends Applicant {
@@ -150,4 +153,34 @@ export interface Organizer {
   institute_code: string
   email: string
   created_at: string
+}
+
+export interface Badge {
+  id: string
+  name: string
+  description: string | null
+  icon: string | null
+  skill_points: number
+  created_at: string
+}
+
+export interface UserBadge {
+  id: string
+  user_id: string
+  badge_id: string
+  earned_at: string
+  badge?: Badge
+}
+
+export interface Resource {
+  name: string
+  url: string
+  type?: string
+}
+
+export interface LeaderboardEntry {
+  profile: StudentProfile
+  skill_points: number
+  badges: Badge[]
+  rank: number
 }
