@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { Briefcase, User, Home, Sparkles, MessageCircle } from "lucide-react"
+import { Briefcase, User, Home, MessageCircle, Trophy } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
@@ -50,10 +50,10 @@ export function BottomNav() {
       isCenter: true,
     },
     {
-      icon: Sparkles,
-      label: "AI Teams",
-      href: "/team-recommendations",
-      active: pathname === "/team-recommendations",
+      icon: Trophy,
+      label: "Leaderboard",
+      href: "/leaderboard",
+      active: pathname === "/leaderboard",
     },
     {
       label: "Profile",
