@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ArrowLeft, Github, Linkedin, Globe, Mail, MessageCircle, Phone } from "lucide-react"
+import { ArrowLeft, Github, Linkedin, Globe, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import type { StudentProfile, UserAchievement, UserProject } from "@/lib/types"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
@@ -23,6 +23,8 @@ export default function PublicProfilePage() {
   const supabase = getSupabaseBrowserClient()
 
   useEffect(() => {
+    if (!params.userId) return
+
     fetchProfile()
     checkIfOwnProfile()
   }, [params.userId])
@@ -41,6 +43,12 @@ export default function PublicProfilePage() {
 
   async function fetchProfile() {
     try {
+      if (!params.userId || typeof params.userId !== "string") {
+        setError("Invalid user ID")
+        setLoading(false)
+        return
+      }
+
       const response = await fetch(`/api/profile/${params.userId}`)
 
       if (!response.ok) {
@@ -143,32 +151,6 @@ export default function PublicProfilePage() {
                           Message
                         </Link>
                       </Button>
-                    )}
-                    {profile.phone && (
-                      <Button asChild variant="outline">
-                        <a href={`tel:${profile.phone}`}>
-                          <Phone className="mr-2 h-4 w-4" />
-                          Call
-                        </a>
-                      </Button>
-                    )}
-                    {profile.email ? (
-                      <a
-                        href={mailtoLink}
-                        className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
-                      >
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Email
-                      </a>
-                    ) : (
-                      <button
-                        disabled
-                        title="Email not available"
-                        className="inline-flex items-center justify-center rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-muted-foreground opacity-50"
-                      >
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Email
-                      </button>
                     )}
                     {profile.github && (
                       <Button asChild size="icon" variant="outline">

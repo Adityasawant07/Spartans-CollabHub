@@ -4,7 +4,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server"
 export async function GET(request: Request, { params }: { params: { userId: string } }) {
   try {
     const supabase = await getSupabaseServerClient()
-    const { userId } = params
+    const { userId } = await params
 
     console.log("[v0] Profile GET - userId param:", userId)
 

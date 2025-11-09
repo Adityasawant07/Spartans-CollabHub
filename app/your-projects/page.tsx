@@ -176,11 +176,14 @@ export default function YourProjectsPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b bg-[#3B82F6] px-4 py-4">
+    <div className="flex h-screen flex-col bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50">
+      <header className="flex items-center justify-between border-b bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 px-4 py-4 shadow-lg">
         <h1 className="text-2xl font-bold text-white">Task Manager</h1>
-        <Button asChild size="sm" className="bg-white text-[#3B82F6] hover:bg-gray-100 font-semibold">
+        <Button
+          asChild
+          size="sm"
+          className="bg-white text-orange-500 hover:bg-orange-50 font-semibold rounded-full shadow-md"
+        >
           <Link href="/projects/create">
             <Plus className="mr-2 h-4 w-4" />
             Create New Task
@@ -188,7 +191,6 @@ export default function YourProjectsPage() {
         </Button>
       </header>
 
-      {/* Task List */}
       <main className="flex-1 overflow-y-auto pb-20">
         <div className="container mx-auto px-4 py-6">
           {loading ? (
@@ -196,7 +198,10 @@ export default function YourProjectsPage() {
           ) : myProjects.length === 0 ? (
             <div className="py-16 text-center">
               <p className="mb-4 text-muted-foreground">You haven't created any tasks yet.</p>
-              <Button asChild className="bg-[#3B82F6] hover:bg-[#2563EB]">
+              <Button
+                asChild
+                className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 rounded-full shadow-lg"
+              >
                 <Link href="/projects/create">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Your First Task
@@ -216,14 +221,23 @@ export default function YourProjectsPage() {
                   (project.applicants as any[])?.filter((a: any) => a.status === "Accepted") || []
                 const acceptedCount = acceptedApplicants.length
                 const isTeamFull = teamSize > 0 && acceptedCount >= teamSize
+                const totalApplications = (project.applicants as any[])?.length || 0
 
                 return (
-                  <Card key={project.id}>
+                  <Card
+                    key={project.id}
+                    className="bg-white/90 backdrop-blur-sm border-2 border-orange-100 rounded-2xl shadow-lg"
+                  >
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <CardTitle className="line-clamp-1 text-xl">{project.title}</CardTitle>
                           <CardDescription className="line-clamp-2 mt-2">{project.description}</CardDescription>
+                          {totalApplications > 0 && (
+                            <p className="text-sm font-semibold text-orange-600 mt-2">
+                              {totalApplications} {totalApplications === 1 ? "Application" : "Applications"}
+                            </p>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2">
                           <Badge className={difficultyBadge.className}>{difficultyBadge.text}</Badge>
@@ -240,14 +254,19 @@ export default function YourProjectsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="mb-4">
-                        <h3 className="mb-3 text-sm font-semibold">Pending Applicants ({pendingApplicants.length})</h3>
+                        <h3 className="mb-3 text-sm font-semibold text-orange-600">
+                          Pending Applicants ({pendingApplicants.length})
+                        </h3>
                         {pendingApplicants.length > 0 ? (
                           <div className="space-y-3">
                             {pendingApplicants.map((applicant: any) => (
-                              <div key={applicant.user} className="flex items-center gap-3 rounded-lg border p-3">
-                                <Avatar className="h-12 w-12">
+                              <div
+                                key={applicant.user}
+                                className="flex items-center gap-3 rounded-xl border-2 border-orange-100 p-3 bg-white/50"
+                              >
+                                <Avatar className="h-12 w-12 border-2 border-orange-200">
                                   <AvatarImage src={applicant.profile?.profile_picture_url || undefined} />
-                                  <AvatarFallback className="bg-[#3B82F6] text-white">
+                                  <AvatarFallback className="bg-gradient-to-r from-orange-500 to-pink-500 text-white">
                                     {applicant.profile?.name?.charAt(0).toUpperCase() || "U"}
                                   </AvatarFallback>
                                 </Avatar>
@@ -256,7 +275,11 @@ export default function YourProjectsPage() {
                                   {applicant.profile?.skills && applicant.profile.skills.length > 0 && (
                                     <div className="mt-1 flex flex-wrap gap-1">
                                       {applicant.profile.skills.slice(0, 3).map((skill: string, skillIdx: number) => (
-                                        <Badge key={skillIdx} variant="secondary" className="text-xs">
+                                        <Badge
+                                          key={skillIdx}
+                                          variant="secondary"
+                                          className="text-xs bg-orange-100 text-orange-700"
+                                        >
                                           {skill}
                                         </Badge>
                                       ))}
@@ -266,7 +289,7 @@ export default function YourProjectsPage() {
                                 <div className="flex gap-2">
                                   <Button
                                     size="sm"
-                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-full shadow-md"
                                     onClick={() => handleAccept(project.id, applicant.user)}
                                     disabled={processingApplicant === applicant.user || isTeamFull}
                                   >
@@ -275,14 +298,19 @@ export default function YourProjectsPage() {
                                   </Button>
                                   <Button
                                     size="sm"
-                                    variant="destructive"
+                                    className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-full shadow-md"
                                     onClick={() => handleDecline(project.id, applicant.user)}
                                     disabled={processingApplicant === applicant.user}
                                   >
                                     <X className="h-4 w-4 mr-1" />
                                     Decline
                                   </Button>
-                                  <Button asChild size="sm" variant="outline">
+                                  <Button
+                                    asChild
+                                    size="sm"
+                                    variant="outline"
+                                    className="rounded-full border-2 border-purple-200 hover:bg-purple-50 bg-transparent"
+                                  >
                                     <Link href={`/messages/${applicant.user}`}>
                                       <MessageCircle className="h-4 w-4" />
                                     </Link>
@@ -298,23 +326,25 @@ export default function YourProjectsPage() {
 
                       {acceptedApplicants.length > 0 && (
                         <div className="mb-4">
-                          <h3 className="mb-3 text-sm font-semibold">Accepted Members ({acceptedApplicants.length})</h3>
+                          <h3 className="mb-3 text-sm font-semibold text-green-600">
+                            Accepted Members ({acceptedApplicants.length})
+                          </h3>
                           <div className="space-y-2">
                             {acceptedApplicants.map((applicant: any) => (
                               <div
                                 key={applicant.user}
-                                className="flex items-center gap-3 rounded-lg border p-2 bg-green-50"
+                                className="flex items-center gap-3 rounded-xl border-2 border-green-100 p-2 bg-green-50/50"
                               >
-                                <Avatar className="h-10 w-10">
+                                <Avatar className="h-10 w-10 border-2 border-green-200">
                                   <AvatarImage src={applicant.profile?.profile_picture_url || undefined} />
-                                  <AvatarFallback className="bg-[#3B82F6] text-white text-xs">
+                                  <AvatarFallback className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs">
                                     {applicant.profile?.name?.charAt(0).toUpperCase() || "U"}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
                                   <p className="text-sm font-medium">{applicant.profile?.name || "Member"}</p>
                                 </div>
-                                <Badge className="bg-green-100 text-green-800">Accepted</Badge>
+                                <Badge className="bg-green-100 text-green-800 rounded-full">Accepted</Badge>
                               </div>
                             ))}
                           </div>
@@ -322,11 +352,15 @@ export default function YourProjectsPage() {
                       )}
 
                       <div className="flex gap-2">
-                        <Button asChild variant="outline" className="flex-1 bg-transparent">
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="flex-1 bg-transparent border-2 border-purple-200 hover:bg-purple-50 rounded-full"
+                        >
                           <Link href={`/projects/${project.id}`}>View Full Details</Link>
                         </Button>
                         <Button
-                          variant="destructive"
+                          className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-full shadow-md"
                           onClick={() => handleDelete(project.id)}
                           disabled={deletingProject === project.id}
                         >
@@ -343,7 +377,6 @@ export default function YourProjectsPage() {
         </div>
       </main>
 
-      {/* Bottom Navigation */}
       <BottomNav />
     </div>
   )

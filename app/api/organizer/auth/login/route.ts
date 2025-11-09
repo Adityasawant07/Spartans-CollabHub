@@ -4,34 +4,33 @@ import { createServerClient } from "@/lib/supabase/server"
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerClient()
-    const { email, password, instituteCode } = await request.json()
+    const { email, password } = await request.json()
 
-    if (!email || !password || !instituteCode) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 })
+    if (!email || !password) {
+      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // Verify organizer credentials
     const { data: organizer, error } = await supabase
       .from("organizers")
       .select("*")
       .eq("email", email)
-      .eq("institute_code", instituteCode)
+      .eq("password_hash", password) // Compare password directly with password_hash field
       .single()
 
     if (error || !organizer) {
-      return NextResponse.json({ error: "Invalid credentials or institute code" }, { status: 401 })
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
-    // In production, you should hash passwords using bcrypt or similar
-    // For now, we'll do a simple comparison (NOT SECURE FOR PRODUCTION)
-    if (organizer.password_hash !== password) {
-      return NextResponse.json({ error: "Invalid password" }, { status: 401 })
-    }
-
-    // Return organizer data (excluding password)
     const { password_hash, ...organizerData } = organizer
 
-    return NextResponse.json({ organizer: organizerData })
+    return NextResponse.json({
+      organizer: {
+        organizer_id: organizerData.id,
+        institute_id: organizerData.institute_code || organizerData.institute_id,
+        institute_name: organizerData.institute_name,
+        ...organizerData,
+      },
+    })
   } catch (error: any) {
     console.error("[v0] Organizer login error:", error)
     return NextResponse.json({ error: error.message }, { status: 500 })

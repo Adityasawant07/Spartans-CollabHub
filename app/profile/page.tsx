@@ -263,9 +263,7 @@ export default function ProfilePage() {
       <header className="border-b">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 flex items-center justify-center">
-              <span className="font-bold text-white text-sm">CH</span>
-            </div>
+            <img src="/logo.png" alt="CollabHub" className="h-8 w-8 rounded" />
             <h1 className="text-xl font-bold text-primary">CollabHub</h1>
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -291,7 +289,11 @@ export default function ProfilePage() {
                 </div>
               </CardHeader>
               <CardContent>
-                {error && <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+                {error && (
+                  <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
 
                 {editing ? (
                   <div className="space-y-4">

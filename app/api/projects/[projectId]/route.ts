@@ -15,13 +15,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ proj
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: projects, error } = await supabase
-      .from("projects")
-      .select(`
-        *,
-        author:student_profiles!projects_author_id_fkey(*)
-      `)
-      .eq("id", projectId)
+    const { data: projects, error } = await supabase.from("projects").select("*").eq("id", projectId)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -66,7 +60,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ proj
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user's profile
     const { data: profiles } = await supabase.from("student_profiles").select("id").eq("user_id", user.id)
 
     if (!profiles || profiles.length === 0) {
@@ -75,7 +68,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ proj
 
     const profile = profiles[0]
 
-    // Check if user is the author
     const { data: existingProjects } = await supabase.from("projects").select("author_id").eq("id", projectId)
 
     if (!existingProjects || existingProjects.length === 0) {
@@ -98,10 +90,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ proj
         updated_at: new Date().toISOString(),
       })
       .eq("id", projectId)
-      .select(`
-        *,
-        author:student_profiles!projects_author_id_fkey(*)
-      `)
+      .select("*")
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -131,7 +120,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ p
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user's profile
     const { data: profiles } = await supabase.from("student_profiles").select("id").eq("user_id", user.id)
 
     if (!profiles || profiles.length === 0) {
@@ -140,7 +128,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ p
 
     const profile = profiles[0]
 
-    // Check if user is the author
     const { data: existingProjects } = await supabase.from("projects").select("author_id").eq("id", projectId)
 
     if (!existingProjects || existingProjects.length === 0) {

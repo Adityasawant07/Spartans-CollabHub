@@ -159,7 +159,10 @@ export default function AppliedTasksPage() {
                       {/* Application Date */}
                       {task.myApplication?.appliedAt && (
                         <p className="text-xs text-muted-foreground mb-4">
-                          Applied on {new Date(task.myApplication.appliedAt).toLocaleDateString()}
+                          Applied on{" "}
+                          {new Date(task.myApplication.appliedAt).getTime() > 0
+                            ? new Date(task.myApplication.appliedAt).toLocaleDateString()
+                            : "Unknown date"}
                         </p>
                       )}
 

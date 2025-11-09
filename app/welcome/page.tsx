@@ -2,19 +2,18 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 export default function WelcomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-violet-600 to-indigo-700 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-orange-500 via-pink-500 to-purple-500 flex flex-col items-center justify-center p-6">
       <div className="max-w-md w-full text-center space-y-8">
-        {/* Logo */}
         <div className="flex justify-center">
-          <div className="w-24 h-24 rounded-2xl bg-white shadow-2xl flex items-center justify-center">
-            <span className="font-bold text-indigo-600 text-5xl">CC</span>
+          <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-2xl">
+            <img src="/logo.png" alt="CollabHub Logo" className="w-full h-full object-cover" />
           </div>
         </div>
 
         {/* Title and Tagline */}
         <div className="space-y-3">
-          <h1 className="text-5xl font-bold text-white tracking-tight">College Connect</h1>
-          <p className="text-xl text-indigo-100 font-medium">Connect. Collaborate. Create.</p>
+          <h1 className="text-5xl font-bold text-white tracking-tight">CollabHub</h1>
+          <p className="text-xl text-white/90 font-medium">Connect. Collaborate. Create.</p>
         </div>
 
         {/* Call to Action Buttons */}

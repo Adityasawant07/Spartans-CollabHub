@@ -5,13 +5,7 @@ export async function GET() {
   try {
     const supabase = await createServerClient()
 
-    const { data: events, error } = await supabase
-      .from("events")
-      .select(`
-        *,
-        organizer:student_profiles!events_organizer_id_fkey(*)
-      `)
-      .order("date", { ascending: true })
+    const { data: events, error } = await supabase.from("events").select("*").order("date", { ascending: true })
 
     if (error) {
       console.error("[v0] Events GET error:", error)
@@ -54,10 +48,7 @@ export async function POST(request: NextRequest) {
         location,
         organizer_id: profile.id,
       })
-      .select(`
-        *,
-        organizer:student_profiles!events_organizer_id_fkey(*)
-      `)
+      .select("*")
       .single()
 
     if (error) {

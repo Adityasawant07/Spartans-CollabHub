@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
 
     const profileId = profiles[0].id
 
-    // Get all messages where user is sender or recipient
     const { data: messages, error: messagesError } = await supabase
       .from("messages")
       .select(`
@@ -38,8 +37,8 @@ export async function GET(request: NextRequest) {
         message,
         read,
         created_at,
-        sender:student_profiles!messages_sender_id_fkey(id, name, email, avatar_url),
-        recipient:student_profiles!messages_recipient_id_fkey(id, name, email, avatar_url)
+        sender:sender_id(id, name, email, profile_picture_url, college, avatar_url),
+        recipient:recipient_id(id, name, email, profile_picture_url, college, avatar_url)
       `)
       .or(`sender_id.eq.${profileId},recipient_id.eq.${profileId}`)
       .order("created_at", { ascending: false })
@@ -128,8 +127,8 @@ export async function POST(request: NextRequest) {
         message,
         read,
         created_at,
-        sender:student_profiles!messages_sender_id_fkey(id, name, email, avatar_url),
-        recipient:student_profiles!messages_recipient_id_fkey(id, name, email, avatar_url)
+        sender:sender_id(id, name, email, profile_picture_url, college, avatar_url),
+        recipient:recipient_id(id, name, email, profile_picture_url, college, avatar_url)
       `)
 
     if (error) {

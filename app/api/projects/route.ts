@@ -25,13 +25,7 @@ export async function GET(request: Request) {
     const skills = searchParams.get("skills")?.split(",").filter(Boolean) || []
     const authorId = searchParams.get("author_id")
 
-    let query = supabase.from("projects").select(
-      `
-        *,
-        author:student_profiles!projects_author_id_fkey(*)
-      `,
-      { count: "exact" },
-    )
+    let query = supabase.from("projects").select("*", { count: "exact" })
 
     if (authorId) {
       query = query.eq("author_id", authorId)
@@ -63,6 +57,7 @@ export async function GET(request: Request) {
     const { data: projects, error, count } = await query
 
     if (error) {
+      console.error("[v0] Error fetching projects:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -74,7 +69,8 @@ export async function GET(request: Request) {
       totalPages: Math.ceil((count || 0) / limit),
     })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("[v0] Error in GET /api/projects:", error)
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
   }
 }
 
@@ -104,6 +100,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Title and description are required" }, { status: 400 })
     }
 
+    if (!category) {
+      return NextResponse.json({ error: "Category is required" }, { status: 400 })
+    }
+
     const { data: project, error } = await supabase
       .from("projects")
       .insert({
@@ -115,18 +115,17 @@ export async function POST(request: Request) {
         attachments: attachments || [],
         status: "Open",
       })
-      .select(`
-        *,
-        author:student_profiles!projects_author_id_fkey(*)
-      `)
+      .select("*")
       .single()
 
     if (error) {
+      console.error("[v0] Error creating project:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json(project, { status: 201 })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("[v0] Error in POST /api/projects:", error)
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
   }
 }

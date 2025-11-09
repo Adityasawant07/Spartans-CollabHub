@@ -33,6 +33,10 @@ export default function ProjectDetailPage() {
   const supabase = getSupabaseBrowserClient()
 
   useEffect(() => {
+    if (params.projectId === "create") {
+      return
+    }
+
     fetchProject()
     fetchUserProfile()
 
@@ -47,7 +51,6 @@ export default function ProjectDetailPage() {
           filter: `id=eq.${params.projectId}`,
         },
         () => {
-          console.log("[v0] Project updated, refreshing applicants")
           fetchProject()
         },
       )
@@ -113,6 +116,10 @@ export default function ProjectDetailPage() {
     } finally {
       setApplying(false)
     }
+  }
+
+  if (params.projectId === "create") {
+    return null
   }
 
   if (loading) {
@@ -182,7 +189,9 @@ export default function ProjectDetailPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      {new Date(project.created_at).toLocaleDateString()}
+                      {project.created_at && new Date(project.created_at).getTime() > 0
+                        ? new Date(project.created_at).toLocaleDateString()
+                        : "Unknown date"}
                     </div>
                   </div>
                 </div>
@@ -345,7 +354,10 @@ export default function ProjectDetailPage() {
 
                       {applicant.appliedAt && (
                         <p className="text-xs text-muted-foreground">
-                          Applied on {new Date(applicant.appliedAt).toLocaleDateString()}
+                          Applied on{" "}
+                          {new Date(applicant.appliedAt).getTime() > 0
+                            ? new Date(applicant.appliedAt).toLocaleDateString()
+                            : "Unknown date"}
                         </p>
                       )}
 

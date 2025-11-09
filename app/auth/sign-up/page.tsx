@@ -59,10 +59,17 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Create Account</CardTitle>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50 p-4">
+      <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm border-2 border-orange-200 shadow-xl">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl overflow-hidden shadow-lg">
+              <img src="/logo.png" alt="CollabHub Logo" className="h-full w-full object-cover" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+            Create Account
+          </CardTitle>
           <CardDescription>Join CollabHub today</CardDescription>
         </CardHeader>
         <CardContent>
@@ -99,13 +106,17 @@ export default function SignUpPage() {
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full bg-[#00c4cc] hover:bg-[#00b0b8] text-white" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white shadow-lg"
+              disabled={loading}
+            >
               {loading ? "Creating account..." : "Sign Up"}
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          <p className="mt-4 text-center text-sm text-gray-600">
             Already have an account?{" "}
-            <Link href="/auth/login" className="text-[#00c4cc] hover:underline font-medium">
+            <Link href="/auth/login" className="text-orange-600 hover:text-orange-700 hover:underline font-medium">
               Login
             </Link>
           </p>

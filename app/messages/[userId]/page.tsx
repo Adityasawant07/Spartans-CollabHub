@@ -23,6 +23,8 @@ export default function ConversationPage() {
   const supabase = getSupabaseBrowserClient()
 
   useEffect(() => {
+    if (!params.userId) return
+
     checkAuth()
     fetchOtherUserProfile()
     fetchMessages()
@@ -99,7 +101,16 @@ export default function ConversationPage() {
 
   async function fetchOtherUserProfile() {
     try {
+      if (!params.userId || typeof params.userId !== "string") {
+        console.error("Invalid user ID")
+        setLoading(false)
+        return
+      }
+
       const response = await fetch(`/api/profile/${params.userId}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch user profile")
+      }
       const data = await response.json()
       setOtherUser(data)
     } catch (error) {
@@ -109,6 +120,12 @@ export default function ConversationPage() {
 
   async function fetchMessages() {
     try {
+      if (!params.userId || typeof params.userId !== "string") {
+        console.error("Invalid user ID")
+        setLoading(false)
+        return
+      }
+
       const response = await fetch(`/api/messages/${params.userId}`)
       const data = await response.json()
       setMessages(data)

@@ -4,7 +4,7 @@ import { createServerClient } from "@/lib/supabase/server"
 export async function POST(request: NextRequest, { params }: { params: { competitionId: string } }) {
   try {
     const supabase = await createServerClient()
-    const { competitionId } = params
+    const { competitionId } = await Promise.resolve(params)
 
     const {
       data: { user },
@@ -19,9 +19,10 @@ export async function POST(request: NextRequest, { params }: { params: { competi
       .select("id")
       .eq("competition_id", competitionId)
       .eq("user_id", user.id)
-      .single()
+      .maybeSingle()
 
     if (existingUpvote) {
+      console.log("[v0] User already upvoted this competition")
       return NextResponse.json({ error: "Already upvoted" }, { status: 400 })
     }
 
@@ -33,13 +34,21 @@ export async function POST(request: NextRequest, { params }: { params: { competi
 
     if (upvoteError) {
       console.error("[v0] Upvote insert error:", upvoteError)
+      if (upvoteError.code === "23505") {
+        return NextResponse.json({ error: "Already upvoted" }, { status: 400 })
+      }
       return NextResponse.json({ error: upvoteError.message }, { status: 500 })
     }
 
-    // Increment upvotes count
-    const { error: updateError } = await supabase.rpc("increment_competition_upvotes", {
-      competition_id: competitionId,
-    })
+    // Increment upvotes count directly
+    const { data: competition } = await supabase.from("competitions").select("upvotes").eq("id", competitionId).single()
+
+    const currentUpvotes = competition?.upvotes || 0
+
+    const { error: updateError } = await supabase
+      .from("competitions")
+      .update({ upvotes: currentUpvotes + 1 })
+      .eq("id", competitionId)
 
     if (updateError) {
       console.error("[v0] Upvote increment error:", updateError)
@@ -56,7 +65,7 @@ export async function POST(request: NextRequest, { params }: { params: { competi
 export async function DELETE(request: NextRequest, { params }: { params: { competitionId: string } }) {
   try {
     const supabase = await createServerClient()
-    const { competitionId } = params
+    const { competitionId } = await Promise.resolve(params)
 
     const {
       data: { user },
@@ -77,10 +86,15 @@ export async function DELETE(request: NextRequest, { params }: { params: { compe
       return NextResponse.json({ error: deleteError.message }, { status: 500 })
     }
 
-    // Decrement upvotes count
-    const { error: updateError } = await supabase.rpc("decrement_competition_upvotes", {
-      competition_id: competitionId,
-    })
+    // Decrement upvotes count directly
+    const { data: competition } = await supabase.from("competitions").select("upvotes").eq("id", competitionId).single()
+
+    const currentUpvotes = competition?.upvotes || 0
+
+    const { error: updateError } = await supabase
+      .from("competitions")
+      .update({ upvotes: Math.max(0, currentUpvotes - 1) })
+      .eq("id", competitionId)
 
     if (updateError) {
       console.error("[v0] Upvote decrement error:", updateError)

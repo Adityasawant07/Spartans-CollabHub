@@ -23,8 +23,10 @@ export default function CreateProjectPage() {
   const [category, setCategory] = useState("")
   const [teamSize, setTeamSize] = useState("")
   const [difficulty, setDifficulty] = useState("")
+  const [showSuccess, setShowSuccess] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [authChecking, setAuthChecking] = useState(true)
   const router = useRouter()
   const supabase = getSupabaseBrowserClient()
 
@@ -35,6 +37,8 @@ export default function CreateProjectPage() {
       } = await supabase.auth.getUser()
       if (!user) {
         router.push("/auth/login")
+      } else {
+        setAuthChecking(false)
       }
     }
     checkAuth()
@@ -92,7 +96,10 @@ export default function CreateProjectPage() {
         throw new Error(data.error || "Failed to create project")
       }
 
-      router.push(`/projects/${data.id}`)
+      setShowSuccess(true)
+      setTimeout(() => {
+        router.push(`/projects/${data.id}`)
+      }, 1500)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -100,11 +107,37 @@ export default function CreateProjectPage() {
     }
   }
 
+  if (authChecking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50">
+        <p className="text-lg text-gray-600">Loading...</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50">
+      {showSuccess && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-5">
+          <Card className="border-2 border-green-500 bg-white shadow-2xl">
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="rounded-full bg-gradient-to-r from-green-500 to-emerald-500 p-2">
+                <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-green-700">Success!</p>
+                <p className="text-sm text-gray-600">Task created successfully</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <header className="border-b bg-white/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
-          <Button asChild variant="ghost">
+          <Button asChild variant="ghost" className="text-gray-700 hover:text-gray-900">
             <Link href="/dashboard">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
@@ -114,9 +147,11 @@ export default function CreateProjectPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Card className="mx-auto max-w-2xl">
+        <Card className="mx-auto max-w-2xl bg-white/90 backdrop-blur-sm border-2 border-orange-200 shadow-xl">
           <CardHeader>
-            <CardTitle>Create New Task</CardTitle>
+            <CardTitle className="text-2xl bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+              Create New Task
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -145,10 +180,10 @@ export default function CreateProjectPage() {
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
                 <Select value={category} onValueChange={setCategory} required>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white focus:bg-white">
                     <SelectValue placeholder="Select a category (required)" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     {PROJECT_CATEGORIES.map((cat) => (
                       <SelectItem key={cat} value={cat}>
                         {cat}
@@ -177,10 +212,10 @@ export default function CreateProjectPage() {
               <div className="space-y-2">
                 <Label htmlFor="difficulty">Difficulty Level *</Label>
                 <Select value={difficulty} onValueChange={setDifficulty} required>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white focus:bg-white">
                     <SelectValue placeholder="Select difficulty" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="easy">
                       <div className="flex items-center gap-2">
                         <span className="text-green-500">●</span>
@@ -214,7 +249,11 @@ export default function CreateProjectPage() {
                 />
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full bg-[#3B82F6] hover:bg-[#2563EB]" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white shadow-lg"
+                disabled={loading}
+              >
                 {loading ? "Creating..." : "Create Task"}
               </Button>
             </form>

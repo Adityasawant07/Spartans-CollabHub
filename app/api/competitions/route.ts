@@ -9,10 +9,7 @@ export async function GET() {
 
     const { data: competitions, error } = await supabase
       .from("competitions")
-      .select(`
-        *,
-        organizer:student_profiles!competitions_organizer_id_fkey(*)
-      `)
+      .select("*")
       .gte("end_date", today)
       .order("start_date", { ascending: true })
 
@@ -32,36 +29,33 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const { data: profile } = await supabase.from("student_profiles").select("id").eq("user_id", user.id).single()
-
-    if (!profile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 })
-    }
-
     const body = await request.json()
-    const { title, description, start_date, end_date, banner_url } = body
+    const { title, description, start_date, end_date, organizer_id } = body
+
+    if (!title || !description || !start_date || !end_date || !organizer_id) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    }
+
+    const competitionData: any = {
+      title,
+      description,
+      start_date,
+      end_date,
+      organizer_id, // Use the organizer_id from the request
+    }
+
+    // Add optional fields only if provided
+    if (body.end_session) competitionData.end_session = body.end_session
+    if (body.timing) competitionData.timing = body.timing
+    if (body.contact_number) competitionData.contact_number = body.contact_number
+    if (body.email) competitionData.email = body.email
+    if (body.banner_url) competitionData.banner_url = body.banner_url
+    if (body.info_file_url) competitionData.info_file_url = body.info_file_url
 
     const { data: competition, error } = await supabase
       .from("competitions")
-      .insert({
-        title,
-        description,
-        start_date,
-        end_date,
-        banner_url,
-        organizer_id: profile.id,
-      })
-      .select(`
-        *,
-        organizer:student_profiles!competitions_organizer_id_fkey(*)
-      `)
+      .insert(competitionData)
+      .select("*")
       .single()
 
     if (error) {
