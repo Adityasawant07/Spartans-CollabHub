@@ -1,0 +1,9 @@
+-- Add missing columns to competitions table
+ALTER TABLE competitions 
+ADD COLUMN IF NOT EXISTS timing TEXT,
+ADD COLUMN IF NOT EXISTS event_url TEXT,
+ADD COLUMN IF NOT EXISTS contact_number TEXT,
+ADD COLUMN IF NOT EXISTS banner_url TEXT,
+ADD COLUMN IF NOT EXISTS info_file_url TEXT,
+ADD COLUMN IF NOT EXISTS institute_id TEXT,
+ADD COLUMN IF NOT EXISTS upvotes INTEGER DEFAULT 0;
