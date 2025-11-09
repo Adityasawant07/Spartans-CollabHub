@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, User, MessageCircle, Lightbulb, ClipboardList } from "lucide-react"
+import { Home, User, Lightbulb, ClipboardList } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
@@ -38,7 +38,7 @@ export function BottomNav() {
     },
     {
       icon: Lightbulb,
-      label: "Team Recommendation",
+      label: "Team Rec",
       href: "/team-recommendations",
       active: pathname === "/team-recommendations",
     },
@@ -49,12 +49,6 @@ export function BottomNav() {
       active: pathname === "/your-projects",
     },
     {
-      icon: MessageCircle,
-      label: "Community Chat",
-      href: "/community-chat",
-      active: pathname === "/community-chat",
-    },
-    {
       label: "Profile",
       href: "/profile",
       active: pathname === "/profile",
@@ -63,7 +57,7 @@ export function BottomNav() {
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 border-t bg-white shadow-lg">
       <div className="flex h-16 items-center justify-around px-2">
         {navItems.map((item) => {
           if (item.isProfile) {
@@ -73,12 +67,12 @@ export function BottomNav() {
                 onClick={() => router.push(item.href)}
                 className={cn(
                   "flex flex-1 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors",
-                  item.active ? "text-[#60A5FA]" : "text-muted-foreground hover:text-foreground",
+                  item.active ? "text-orange-500" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Avatar className="h-7 w-7 ring-2 ring-transparent" style={item.active ? { ringColor: "#60A5FA" } : {}}>
+                <Avatar className="h-7 w-7 ring-2 ring-transparent" style={item.active ? { ringColor: "#f97316" } : {}}>
                   <AvatarImage src={profilePictureUrl || undefined} />
-                  <AvatarFallback className="bg-[#60A5FA] text-white">
+                  <AvatarFallback className="bg-gradient-to-br from-orange-500 to-pink-500 text-white">
                     {userName.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
                   </AvatarFallback>
                 </Avatar>
@@ -94,7 +88,7 @@ export function BottomNav() {
               onClick={() => router.push(item.href)}
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors",
-                item.active ? "text-[#60A5FA]" : "text-muted-foreground hover:text-foreground",
+                item.active ? "text-orange-500" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="h-6 w-6" />
