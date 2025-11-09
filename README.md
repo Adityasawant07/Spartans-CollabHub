@@ -1,5 +1,5 @@
 # Spartans-CollabHub
-# To use the Website Use following credentials
+# To use the Website login with following credentials
 # User: collabhub51@gmail.com
 # password: qwerty
 # organiser: organizer1@gec.edu.in
