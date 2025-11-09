@@ -4,4 +4,4 @@
 # password: qwerty
 # organiser: organizer1@gec.edu.in
 # password: 123456
-# Website: 
+# Website: https://v0-collab-hub-chi.vercel.app/
